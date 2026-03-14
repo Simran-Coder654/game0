@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <meta name="theme-color" content="#2a1e4a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta property="og:title" content="FRUIT SENSE - Memory Game">
+    <meta property="og:description" content="Test your memory with 200+ levels! Collect coins, daily challenges">
+    <meta property="og:image" content="https://em-content.zobj.net/source/apple/391/pineapple_1f34d.png">
+    <link rel="icon" type="image/png" href="https://em-content.zobj.net/source/apple/391/pineapple_1f34d.png">
+    <link rel="manifest" href="data:application/manifest+json,{ \"name\": \"Fruit Sense\", \"short_name\": \"FruitSense\", \"start_url\": \".\", \"display\": \"standalone\", \"theme_color\": \"#2a1e4a\", \"background_color\": \"#1b1238\", \"icons\": [{ \"src\": \"https://em-content.zobj.net/source/apple/391/pineapple_1f34d.png\", \"sizes\": \"192x192\", \"type\": \"image/png\" }] }">
+    <title>FRUIT SENSE · premium edition</title>
+    <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        body {
+            min-height: 100vh;
+            background: radial-gradient(circle at 20% 30%, #2a1e4a, #1b1238, #0d0a26);
+            font-family: 'Inter', 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.8rem;
+            touch-action: pan-y pinch-zoom;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 1300px;
+            background: rgba(20, 10, 35, 0.55);
+            backdrop-filter: blur(24px) saturate(250%);
+            -webkit-backdrop-filter: blur(24px) saturate(250%);
+            border: 1px solid rgba(255, 120, 200, 0.35);
+            border-radius: min(80px, 8vw);
+            box-shadow: 0 60px 120px -20px #000, 0 0 0 1px rgba(200, 100, 255, 0.4) inset, 0 20px 60px -10px #a55aff inset;
+            padding: clamp(1.2rem, 5vw, 2.5rem) clamp(1rem, 4vw, 2rem);
+            position: relative;
+        }
+
+        .page { 
+            display: none; 
+            text-align: center; 
+            color: #f0e9ff; 
+            animation: fadeUp 0.3s ease; 
+        }
+        @keyframes fadeUp { 
+            0% { opacity: 0; transform: translateY(12px); } 
+            100% { opacity: 1; transform: translateY(0); } 
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #ff99dd;
+            animation: spin 0.8s linear infinite;
+            margin: 1rem auto;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .page-hint { 
+            font-size: 1.2rem; 
+            color: #ffccff; 
+            margin-bottom: 1rem; 
+            text-shadow: 0 0 10px #ff99ff;
+        }
+
+        .global-timer-area { 
+            margin: 1rem auto; 
+            max-width: 400px; 
+            width: 100%; 
+        }
+
+        .timer-text { 
+            font-size: 1.5rem; 
+            font-weight: bold; 
+            color: #ffd966; 
+            margin-bottom: 0.5rem; 
+        }
+
+        .step-dots { 
+            display: flex; 
+            justify-content: center; 
+            gap: 12px; 
+            margin: 1.5rem 0; 
+        }
+
+        .dot { 
+            width: 14px; 
+            height: 14px; 
+            border-radius: 50%; 
+            background: #5a4a7a; 
+            border: 1px solid #ffb3e6; 
+            transition: 0.2s; 
+        }
+
+        .dot.active { 
+            background: #ffb3e6; 
+            box-shadow: 0 0 15px #ff80df; 
+            transform: scale(1.2); 
+        }
+
+        .pill-message { 
+            background: rgba(255, 255, 255, 0.1); 
+            backdrop-filter: blur(10px); 
+            border: 1px solid #ffb3e6; 
+            border-radius: 60px; 
+            padding: 0.8rem 2rem; 
+            margin: 1rem auto; 
+            width: fit-content; 
+            font-size: 1.4rem; 
+            font-weight: 600; 
+            color: #fff0e0; 
+            box-shadow: 0 0 30px #ffb3e6; 
+        }
+
+        .tutorial-close { 
+            color: white; 
+            transition: 0.1s; 
+        }
+
+        .tutorial-close:active { 
+            opacity: 0.6; 
+        }
+
+        button:disabled { 
+            opacity: 0.5; 
+            pointer-events: none; 
+        }
+
+        .win-action-buttons, .loss-action-buttons { 
+            display: flex; 
+            gap: 1rem; 
+            justify-content: center; 
+            flex-wrap: wrap; 
+            margin-top: 2rem; 
+        }
+
+        h1 {
+            font-size: clamp(2.2rem, 10vw, 3.8rem); 
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff99dd, #c07cff, #79d6ff);
+            -webkit-background-clip: text; 
+            background-clip: text; 
+            color: transparent;
+            text-shadow: 0 0 30px #f687ff, 0 0 70px #a06eff, 0 4px 8px #00000060;
+            margin-bottom: 0.2rem; 
+            letter-spacing: 2px;
+            line-height: 1.2;
+        }
+        h2 { 
+            font-size: clamp(1.2rem, 5vw, 2rem); 
+            font-weight: 350; 
+            color: #cfc2ff; 
+            margin: 0.5rem 0 1rem; 
+            text-shadow: 0 2px 5px #b064ff; 
+        }
+        
+        .stats-premium {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(0.8rem, 3vw, 2rem);
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 120px;
+            padding: clamp(0.8rem, 3vw, 1.2rem) clamp(1rem, 4vw, 2.5rem);
+            margin: 1.8rem auto 2rem;
+            width: fit-content;
+            max-width: 100%;
+            border: 1px solid #ff90e0;
+            box-shadow: 0 16px 30px -8px #000, 0 0 30px #c060ff;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: clamp(6px, 2vw, 12px);
+            background: rgba(50, 30, 80, 0.6);
+            padding: 0.4rem 1rem;
+            border-radius: 60px;
+            border: 1px solid rgba(255, 144, 224, 0.5);
+            min-width: 130px;
+            justify-content: space-between;
+            flex: 0 1 auto;
+        }
+
+        .stat-item .label {
+            font-size: clamp(0.9rem, 3vw, 1.2rem);
+            font-weight: 600;
+            color: #ffd8b0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px #ffa0f0;
+            white-space: nowrap;
+        }
+
+        .stat-value {
+            background: #321f5c;
+            padding: 0.2rem 0.8rem;
+            border-radius: 40px;
+            font-size: clamp(1.3rem, 4vw, 1.8rem);
+            font-weight: 700;
+            color: #ffefc0;
+            border: 1px solid #fc8cd6;
+            box-shadow: 0 0 15px #f075ff;
+            min-width: 50px;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .coin-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem 1rem;
+            background: #241d3b;
+            border: 1px solid #f5c542;
+            border-radius: 60px;
+            padding: 0.4rem 1.5rem;
+            margin: 0.5rem auto 1rem;
+            width: fit-content;
+            box-shadow: 0 0 20px #ffd966;
+        }
+        .coin-icon { font-size: 1.8rem; filter: drop-shadow(0 0 8px gold); }
+        .coin-count { font-size: 1.8rem; font-weight: bold; color: #ffecaa; }
+
+        .control-bar {
+            display: flex;
+            justify-content: center;
+            gap: 0.8rem;
+            margin: 1rem 0 2rem;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            background: linear-gradient(145deg, #4a3a70, #2f234a);
+            border: 2px solid #ffb3e6;
+            border-radius: 60px;
+            padding: 0.6rem 1.2rem;
+            font-size: clamp(0.9rem, 3vw, 1.2rem);
+            font-weight: 550;
+            color: #f7eaff;
+            cursor: pointer;
+            transition: 0.1s transform, 0.1s box-shadow;
+            box-shadow: 0 6px 0 #1e1638, 0 10px 20px -5px #000;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            border: 2px solid #ffb3e6;
+            touch-action: manipulation;
+        }
+
+        .control-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #1e1638, 0 10px 20px -5px #000;
+        }
+
+        .control-btn.danger {
+            background: linear-gradient(145deg, #aa4c4c, #7a3232);
+            border-color: #ffb0b0;
+        }
+
+        .fruit-img { 
+            width: clamp(60px, 12vw, 85px); 
+            height: clamp(60px, 12vw, 85px); 
+            object-fit: contain; 
+            filter: drop-shadow(0 18px 16px #000) drop-shadow(0 0 18px #fc9eff) drop-shadow(0 0 30px #8f6eff); 
+            transition: transform 0.1s;
+            pointer-events: none;
+        }
+
+        .fruit-img.small { 
+            width: clamp(45px, 8vw, 60px); 
+            height: clamp(45px, 8vw, 60px); 
+        }
+
+        .fruit-img.large { 
+            width: clamp(100px, 20vw, 140px); 
+            height: clamp(100px, 20vw, 140px); 
+        }
+
+        .horizontal-options { 
+            display: flex;             
+            flex-wrap: wrap; 
+            justify-content: center; 
+            align-items: center; 
+            gap: clamp(0.5rem, 2vw, 1rem); 
+            margin: 2rem 0; 
+        }
+
+        .fruit-option {
+            background: linear-gradient(145deg, #372b5a, #221b40); 
+            backdrop-filter: blur(12px); 
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 60px;
+            padding: 0.6rem 1rem; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 4px;
+            border: 2px solid #ffb3e6; 
+            box-shadow: 0 8px 0 #180f30, 0 14px 20px -5px #000, 0 0 30px #c880ff;
+            transition: 0.1s transform, 0.1s box-shadow; 
+            cursor: pointer; 
+            min-width: 90px;
+            flex: 0 1 auto;
+            touch-action: manipulation;
+        }
+
+        .fruit-option:active {
+            transform: translateY(4px) scale(0.98);
+            box-shadow: 0 4px 0 #180f30, 0 14px 20px -5px #000, 0 0 30px #c880ff;
+        }
+
+        .fruit-option span { 
+            font-size: clamp(1rem, 4vw, 1.4rem); 
+            font-weight: 500; 
+            color: #f3e5ff; 
+            text-shadow: 0 2px 3px black; 
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .tutorial-modal {
+            background: linear-gradient(145deg, #2a1e4a, #1b1238);
+            border: 3px solid #ffaae6;
+            border-radius: 60px;
+            padding: clamp(1.5rem, 5vw, 2.5rem);
+            max-width: 600px;
+            width: 100%;
+            color: #f0e9ff;
+            box-shadow: 0 0 100px #ff77dd;
+            position: relative;
+        }
+
+        .yesno-row { 
+            display: flex; 
+            gap: clamp(1rem, 5vw, 2.5rem); 
+            justify-content: center; 
+            margin: 1.8rem 0 0.5rem; 
+            flex-wrap: wrap;
+        }
+
+        .real-btn {
+            border: none; 
+            border-radius: 70px; 
+            padding: clamp(0.8rem, 4vw, 1.2rem) clamp(1.5rem, 6vw, 3.5rem); 
+            font-size: clamp(1.5rem, 6vw, 2.4rem); 
+            font-weight: 700;
+            letter-spacing: 2px; 
+            text-transform: uppercase; 
+            cursor: pointer; 
+            transition: 0.1s transform, 0.1s box-shadow;
+            box-shadow: 0 12px 0 #1e1638, 0 20px 30px -8px black, 0 0 30px currentColor;
+            text-shadow: 0 2px 0 rgba(0,0,0,0.5);
+            min-width: 160px;
+            flex: 0 1 auto;
+            touch-action: manipulation;
+        }
+        .real-btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 6px 0 #1e1638, 0 20px 30px -8px black, 0 0 30px currentColor;
+        }
+        .real-btn.yes { background: linear-gradient(145deg, #6dc76d, #2f9e2f); color: #f0ffe0; }
+        .real-btn.no  { background: linear-gradient(145deg, #d46a6a, #a13e3e); color: #ffe0e0; }
+
+        .difficulty-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: clamp(0.8rem, 3vw, 2rem);
+            flex-wrap: wrap;
+            margin: 2rem 0 2rem;
+        }
+
+        .difficulty-btn {
+            background: linear-gradient(145deg, #7048b0, #4f2f8a);
+            border: 2px solid #ffb3f0;
+            border-radius: 100px;
+            padding: clamp(0.7rem, 2.5vw, 1.2rem) clamp(1rem, 4vw, 2.2rem);     
+            font-size: clamp(1.2rem, 4vw, 1.8rem);           
+            font-weight: 600;
+            color: #f7eaff;
+            box-shadow: 0 10px 0 #271e42, 0 22px 34px -6px black, 0 0 40px #bb86fc;
+            cursor: pointer;
+            transition: 0.1s transform, 0.1s box-shadow;
+            min-width: 130px;        
+            letter-spacing: 1px;
+            text-shadow: 0 2px 2px black;
+            touch-action: manipulation;
+        }
+        .difficulty-btn:active { transform: translateY(6px); box-shadow: 0 4px 0 #271e42, 0 22px 34px -6px black; }
+
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: clamp(0.5rem, 2vw, 1rem);
+            max-width: 650px;
+            width: 100%;
+            margin: 2rem auto;
+            padding: 0 0.5rem;
+        }
+
+        .level-btn {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border-radius: clamp(15px, 4vw, 25px);
+            font-size: clamp(1.2rem, 5vw, 2rem);
+            font-weight: 700;
+            background: linear-gradient(145deg, #372b5a, #221b40);
+            box-shadow: 0 8px 0 #180f30, 0 0 20px #ac6eff;
+            border: 2px solid #f3b0ff;
+            color: #f0e5ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.1s transform, 0.1s box-shadow;
+            cursor: pointer;
+            text-shadow: 0 2px 3px black;
+            line-height: 1;
+            touch-action: manipulation;
+        }
+        .level-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 #180f30, 0 0 20px #ac6eff;
+        }
+
+        .level-btn.unlocked {
+            background: linear-gradient(145deg, #6d4ab3, #4f2f8a);
+            border-color: #ffcfb0;
+            box-shadow: 0 8px 0 #2f1e55, 0 0 40px #d68eff;
+        }
+
+        .level-btn.completed {
+            background: linear-gradient(145deg, #3b9b7a, #1f7a5a);
+            border-color: #b0ffd0;
+            box-shadow: 0 8px 0 #1e4d38, 0 0 40px #70f0b0;
+            color: #e4ffd6;
+        }
+
+        .level-btn.locked {
+            opacity: 0.5;
+            filter: grayscale(70%) brightness(0.5);
+            pointer-events: none;
+            border-color: #6a5a85;
+            background: linear-gradient(145deg, #2a2340, #1b142f);
+        }
+
+        .level-btn.current {
+            border: 4px solid #ffd966;
+            box-shadow: 0 8px 0 #180f30, 0 0 40px #ffaa00;
+            transform: scale(1.05);
+            z-index: 2;
+        }
+
+        #startDailyBtn:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            filter: grayscale(70%);
+            background: #4a4a6a;
+        }
+
+        .daily-section {
+            background: rgba(255, 215, 0, 0.1);
+            border: 2px solid #ffd700;
+            border-radius: 40px;
+            padding: 1.5rem;
+            margin: 2rem auto;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .timer-container {
+            width: 100%; 
+            height: clamp(18px, 4vw, 24px); 
+            background: #1f113a; 
+            border-radius: 60px;
+            border: 1px solid #ffb0f0; 
+            overflow: hidden; 
+            box-shadow: 0 0 20px #f57fd9;
+        }
+
+        .timer-fill {
+            height: 100%; 
+            width: 100%; 
+            background: linear-gradient(90deg, #a0f0b0, #f0f0a0, #ffb0b0);
+            border-radius: 60px; 
+            transition: width 0.1s linear;
+        }
+
+        .win-action-btn {
+            background: #9b71d4; 
+            border: none; 
+            font-size: clamp(1.2rem, 5vw, 1.8rem); 
+            padding: clamp(0.6rem, 2vw, 0.9rem) clamp(1.5rem, 6vw, 3rem);
+            border-radius: 120px; 
+            color: white; 
+            box-shadow: 0 8px 0 #382b55; 
+            cursor: pointer; 
+            transition: 0.1s transform, 0.1s box-shadow;
+            font-weight: 600;
+            border: 1px solid #ffd0ff;
+            touch-action: manipulation;
+        }
+        .win-action-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 #382b55;
+        }
+
+        .back-sign {
+            position: absolute;
+            top: 1.2rem;
+            left: 1.2rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 200, 240, 0.6);
+            border-radius: 40px;
+            padding: 0.3rem 1rem 0.3rem 0.8rem;
+            font-size: 1.4rem;
+            font-weight: 500;
+            color: #ffd9f0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.1s;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            line-height: 1;
+            min-width: 40px;
+            text-align: center;
+            touch-action: manipulation;
+        }
+        .back-sign:active {
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(0.95);
+        }
+
+        .toast-message {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 60px;
+            font-size: 1rem;
+            z-index: 2000;
+            backdrop-filter: blur(10px);
+            border: 1px solid #ff99dd;
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translate(-50%, 100%); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+
+        /* Best streak stat */
+        .stat-item .best-badge {
+            background: #ffd700;
+            color: #2a1e4a;
+            border-radius: 20px;
+            padding: 0.1rem 0.6rem;
+            font-size: 0.8rem;
+            margin-left: 0.5rem;
+            font-weight: bold;
+        }
+
+        /* Fallback image style */
+        .fruit-img.fallback {
+            filter: drop-shadow(0 18px 16px #000) drop-shadow(0 0 18px #fc9eff);
+        }
+
+        @media (max-width: 480px) {
+            .game-container { padding: 1rem; }
+            .stat-item { min-width: 100px; }
+            .difficulty-btn { min-width: 100px; padding: 0.5rem 0.8rem; }
+            .real-btn { min-width: 130px; }
+            .back-sign { top: 0.8rem; left: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="modal-overlay" id="tutorialModal">
+        <div class="tutorial-modal">
+            <span class="tutorial-close" id="closeTutorial" style="position:absolute; top:1rem; right:1.5rem; font-size:2rem; cursor:pointer;">&times;</span>
+            <h3>🎮 How to play</h3>
+            <div class="tutorial-step">
+                <p>1. Pick a fruit – it's your target.</p>
+                <p>2. 5 pages appear, 10s timer runs.</p>
+                <p>3. Press YES if you see YOUR fruit.</p>
+                <p>4. Press NO if it's not there.</p>
+                <p>✅ Find it before time runs out!</p>
+                <p>💰 Coins increase every 5 levels (5→8→10→13→15→17→20→23)</p>
+            </div>
+            <div class="tutorial-nav">
+                <button class="tutorial-btn" id="tutorialStart" style="background:linear-gradient(145deg,#7048b0,#4f2f8a); border-radius:60px; padding:0.8rem 2rem; border:1px solid #ffb3f0; color:white; cursor:pointer;">Got it, play!</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <div class="page" id="pageWelcome" style="display:block">
+            <h1>🍍 FRUIT SENSE</h1>
+            <h2>test your memory · progressive coins</h2>
+            <img src="https://em-content.zobj.net/source/apple/391/pineapple_1f34d.png" class="fruit-img large" alt="pineapple" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\' viewBox=\'0 0 100 100\'%3E%3Ccircle cx=\'50\' cy=\'50\' r=\'45\' fill=\'%23ffd966\'/%3E%3Ctext x=\'50\' y=\'70\' font-size=\'50\' text-anchor=\'middle\' fill=\'%232a1e4a\'%3E🍍%3C/text%3E%3C/svg%3E'; this.classList.add('fallback');">
+            <div style="margin: 2rem 0;"><button class="win-action-btn" id="gotoDifficultyBtn">▶ PLAY</button></div>
+            <div class="loading-spinner" style="display: none;"></div>
+        </div>
+
+        <div class="page" id="pageDifficulty">
+            <h1>🎚️ difficulty</h1>
+            <div class="control-bar">
+                <button class="control-btn" id="soundToggleBtn">🔊 Sound ON</button>
+                <button class="control-btn" id="tutorialBtn">📚 Tutorial</button>
+                <button class="control-btn danger" id="resetProgressBtn">🔄 Reset</button>
+            </div>
+            <div class="coin-row">
+                <span class="coin-icon">🪙</span>
+                <span class="coin-count" id="coinBalance">0</span>
+            </div>
+            <div class="stats-premium">
+                <div class="stat-item"><span class="label">🏆 WINS</span><span class="stat-value" id="winCount">0</span></div>
+                <div class="stat-item"><span class="label">🍂 LOSSES</span><span class="stat-value" id="lossCount">0</span></div>
+                <div class="stat-item"><span class="label">🔥 STREAK</span><span class="stat-value" id="streakCount">0 <span class="best-badge" id="bestStreakBadge">0</span></span></div>
+            </div>
+            <div class="daily-section">
+                <h2 style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap:wrap;">
+                    📅 Daily <span class="daily-badge">+10🪙</span>
+                </h2>
+                <p style="font-size: 1.1rem; color:#ffd700;" id="dailyStatus">✨ Available now</p>
+                <button class="btn" id="startDailyBtn" style="margin-top:0.5rem; background:#6b4c9f; color:white; padding:0.6rem 2rem; border-radius:60px; border:1px solid #f3b0ff; cursor:pointer;">🌟 Play Daily</button>
+            </div>
+            <div class="difficulty-row">
+                <button class="difficulty-btn" id="diffEasy">🍏 EASY</button>
+                <button class="difficulty-btn" id="diffMedium">🍊 MEDIUM</button>
+                <button class="difficulty-btn" id="diffHard">🍉 HARD</button>
+                <button class="difficulty-btn" id="diffExpert">🔥 EXPERT</button>
+                <button class="difficulty-btn" id="diffMaster">👑 MASTER</button>
+            </div>
+        </div>
+
+        <div class="page" id="pageLevels" style="position:relative;">
+            <div class="back-sign" id="backFromLevelsToDiff">←</div>
+            <h1 id="levelDiffHeading">🍏 easy · 40 levels</h1>
+            <div class="level-grid" id="levelGrid"></div>
+        </div>
+
+        <div class="page" id="pageChooseFruit" style="position:relative;">
+            <div class="back-sign" id="backToLevelsBtn">←</div>
+            <h2 id="chooseLevelDisplay">🍃 level 1 · pick fruit</h2>
+            <div class="horizontal-options" id="fruitGridDynamic"></div>
+            <div class="step-dots" id="selectionDots"></div>
+        </div>
+
+        <!-- guess pages 1-5 -->
+        <div class="page" id="guessPage1"><div class="page-hint">🔍 1/5</div><div class="global-timer-area"><div class="timer-text">⏳ <span id="globalTimerDisplay">10.0</span>s</div><div class="timer-container"><div class="timer-fill" id="globalTimerFill" style="width:100%"></div></div></div><div class="horizontal-options" id="guessGrid1"></div><div class="yesno-row"><button class="real-btn yes" id="yesBtn1">YES</button><button class="real-btn no" id="noBtn1">NO</button></div><div class="step-dots" id="dots1"></div></div>
+        <div class="page" id="guessPage2"><div class="page-hint">🔍 2/5</div><div class="global-timer-area"><div class="timer-text">⏳ <span id="globalTimerDisplay2">10.0</span>s</div><div class="timer-container"><div class="timer-fill" id="globalTimerFill2" style="width:100%"></div></div></div><div class="horizontal-options" id="guessGrid2"></div><div class="yesno-row"><button class="real-btn yes" id="yesBtn2">YES</button><button class="real-btn no" id="noBtn2">NO</button></div><div class="step-dots" id="dots2"></div></div>
+        <div class="page" id="guessPage3"><div class="page-hint">🔍 3/5</div><div class="global-timer-area"><div class="timer-text">⏳ <span id="globalTimerDisplay3">10.0</span>s</div><div class="timer-container"><div class="timer-fill" id="globalTimerFill3" style="width:100%"></div></div></div><div class="horizontal-options" id="guessGrid3"></div><div class="yesno-row"><button class="real-btn yes" id="yesBtn3">YES</button><button class="real-btn no" id="noBtn3">NO</button></div><div class="step-dots" id="dots3"></div></div>
+        <div class="page" id="guessPage4"><div class="page-hint">🔍 4/5</div><div class="global-timer-area"><div class="timer-text">⏳ <span id="globalTimerDisplay4">10.0</span>s</div><div class="timer-container"><div class="timer-fill" id="globalTimerFill4" style="width:100%"></div></div></div><div class="horizontal-options" id="guessGrid4"></div><div class="yesno-row"><button class="real-btn yes" id="yesBtn4">YES</button><button class="real-btn no" id="noBtn4">NO</button></div><div class="step-dots" id="dots4"></div></div>
+        <div class="page" id="guessPage5"><div class="page-hint">🔍 5/5</div><div class="global-timer-area"><div class="timer-text">⏳ <span id="globalTimerDisplay5">10.0</span>s</div><div class="timer-container"><div class="timer-fill" id="globalTimerFill5" style="width:100%"></div></div></div><div class="horizontal-options" id="guessGrid5"></div><div class="yesno-row"><button class="real-btn yes" id="yesBtn5">YES</button><button class="real-btn no" id="noBtn5">NO</button></div><div class="step-dots" id="dots5"></div></div>
+
+        <div class="page" id="winPage">
+            <h1>🏆 VICTORY</h1>
+            <img id="finalFruitImg" class="fruit-img large" src="" alt="" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\' viewBox=\'0 0 100 100\'%3E%3Ccircle cx=\'50\' cy=\'50\' r=\'45\' fill=\'%23ffd966\'/%3E%3Ctext x=\'50\' y=\'70\' font-size=\'50\' text-anchor=\'middle\' fill=\'%232a1e4a\'%3E🍍%3C/text%3E%3C/svg%3E'; this.classList.add('fallback');">
+            <h2>level <span id="winLevelNumber">1</span> cleared</h2>
+            <div class="pill-message" id="winCoinEarned">🪙 +<span id="coinEarnedAmount">5</span> coins</div>
+            <div class="pill-message">🔥 streak <span id="winStreak">0</span></div>
+            <div class="pill-message">🏆 best <span id="winBestStreak">0</span></div>
+            <div class="win-action-buttons">
+                <button class="win-action-btn" id="winNextLevelBtn">▶ next</button>
+                <button class="win-action-btn" id="winBackToLevelsBtn">🎯 levels</button>
+                <button class="win-action-btn" id="winPlayAgainBtn">🔄 retry</button>
+            </div>
+        </div>
+        <div class="page" id="lossPage">
+            <h1 style="background:linear-gradient(145deg,#f5bc9c,#d6896a); -webkit-background-clip:text; background-clip:text; color:transparent;">😕 NO MATCH</h1>
+            <img src="https://em-content.zobj.net/source/apple/391/cross-mark_274c.png" class="fruit-img large" alt="" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\' viewBox=\'0 0 100 100\'%3E%3Ccircle cx=\'50\' cy=\'50\' r=\'45\' fill=\'%23ff6b6b\'/%3E%3Ctext x=\'50\' y=\'70\' font-size=\'50\' text-anchor=\'middle\' fill=\'%232a1e4a\'%3E❌%3C/text%3E%3C/svg%3E'; this.classList.add('fallback');">
+            <div class="pill-message loss-note" id="lossMessage">fruit was <span id="hiddenFruitName">???</span></div>
+            <div class="pill-message">💔 streak lost</div>
+            <div class="loss-action-buttons">
+                <button class="win-action-btn" id="lossTryAgainBtn">🔄 try again</button>
+                <button class="win-action-btn" id="lossBackToLevelsBtn">🎯 levels</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {  
+            // Utility function for safe operations
+            function safeExecute(fn, fallback = null) {
+                try { return fn(); } 
+                catch (e) { 
+                    console.warn('Operation failed:', e); 
+                    return fallback; 
+                }
+            }
+
+            // Toast notification (user feedback)
+            function showToast(message, duration = 2000) {
+                const toast = document.createElement('div');
+                toast.className = 'toast-message';
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), duration);
+            }
+
+            // Fruit data - ONLY FRUITS (no vegetables, no breads)
+            const BASE_FRUITS = safeExecute(() => [
+                { name: "Apple", img: "https://em-content.zobj.net/source/apple/391/red-apple_1f34e.png" },
+                { name: "Banana", img: "https://em-content.zobj.net/source/apple/391/banana_1f34c.png" },
+                { name: "Grapes", img: "https://em-content.zobj.net/source/apple/391/grapes_1f347.png" },
+                { name: "Orange", img: "https://em-content.zobj.net/source/apple/391/tangerine_1f34a.png" },
+                { name: "Watermelon", img: "https://em-content.zobj.net/source/apple/391/watermelon_1f349.png" },
+                { name: "Strawberry", img: "https://em-content.zobj.net/source/apple/391/strawberry_1f353.png" },
+                { name: "Peach", img: "https://em-content.zobj.net/source/apple/391/peach_1f351.png" },
+                { name: "Mango", img: "https://em-content.zobj.net/source/apple/391/mango_1f96d.png" },
+                { name: "Pineapple", img: "https://em-content.zobj.net/source/apple/391/pineapple_1f34d.png" },
+                { name: "Cherry", img: "https://em-content.zobj.net/source/apple/391/cherries_1f352.png" },
+                { name: "Lemon", img: "https://em-content.zobj.net/source/apple/391/lemon_1f34b.png" },
+                { name: "Pear", img: "https://em-content.zobj.net/source/apple/391/pear_1f350.png" },
+                { name: "Kiwi", img: "https://em-content.zobj.net/source/apple/391/kiwi-fruit_1f95d.png" },
+                { name: "Melon", img: "https://em-content.zobj.net/source/apple/391/honey-melon_1f348.png" },
+                { name: "Coconut", img: "https://em-content.zobj.net/source/apple/391/coconut_1f965.png" },
+                { name: "Avocado", img: "https://em-content.zobj.net/source/apple/391/avocado_1f951.png" },
+                { name: "Blueberry", img: "https://em-content.zobj.net/source/apple/391/blueberries_1fad0.png" },
+                { name: "Raspberry", img: "https://em-content.zobj.net/source/apple/391/raspberry_1fad1.png" }
+            ], []);
+
+            const DAILY_FRUITS = BASE_FRUITS.slice(0,5);
+
+            // Progressive coin reward (validated)
+            function getCoinRewardForLevel(level) {
+                const validLevel = Math.min(40, Math.max(1, level));
+                if (validLevel <= 5) return 5;
+                if (validLevel <= 10) return 8;
+                if (validLevel <= 15) return 10;
+                if (validLevel <= 20) return 13;
+                if (validLevel <= 25) return 15;
+                if (validLevel <= 30) return 17;
+                if (validLevel <= 35) return 20;
+                return 23;
+            }
+
+            // Game state
+            let coins = 0, currentDifficulty = 'medium', currentLevel = 1;
+            let completedEasy = new Array(41).fill(false);
+            let completedMedium = new Array(41).fill(false);
+            let completedHard = new Array(41).fill(false);
+            let completedExpert = new Array(41).fill(false);
+            let completedMaster = new Array(41).fill(false);
+            let currentStreak = 0, bestStreak = 0, dailyCompleted = false, lastDailyDate = '';
+            let winTotal = 0, lossTotal = 0, soundEnabled = true;
+
+            // Load from storage with validation
+            function loadProgress() {
+                safeExecute(() => {
+                    const saved = localStorage.getItem('fruitSense_production');
+                    if (!saved) return;
+                    
+                    const stats = JSON.parse(saved);
+                    
+                    // Validate each field before assigning
+                    if (typeof stats.wins === 'number') winTotal = stats.wins;
+                    if (typeof stats.losses === 'number') lossTotal = stats.losses;
+                    if (typeof stats.streak === 'number') currentStreak = stats.streak;
+                    if (typeof stats.bestStreak === 'number') bestStreak = stats.bestStreak;
+                    if (typeof stats.dailyCompleted === 'boolean') dailyCompleted = stats.dailyCompleted;
+                    if (typeof stats.lastDailyDate === 'string') lastDailyDate = stats.lastDailyDate;
+                    if (typeof stats.coins === 'number') coins = stats.coins;
+                    
+                    // Validate completion arrays
+                    if (Array.isArray(stats.completedEasy) && stats.completedEasy.length === 41) completedEasy = stats.completedEasy;
+                    if (Array.isArray(stats.completedMedium) && stats.completedMedium.length === 41) completedMedium = stats.completedMedium;
+                    if (Array.isArray(stats.completedHard) && stats.completedHard.length === 41) completedHard = stats.completedHard;
+                    if (Array.isArray(stats.completedExpert) && stats.completedExpert.length === 41) completedExpert = stats.completedExpert;
+                    if (Array.isArray(stats.completedMaster) && stats.completedMaster.length === 41) completedMaster = stats.completedMaster;
+                });
+            }
+
+            function saveProgress() {
+                safeExecute(() => {
+                    localStorage.setItem('fruitSense_production', JSON.stringify({
+                        wins: winTotal, losses: lossTotal, streak: currentStreak, bestStreak,
+                        dailyCompleted, lastDailyDate, coins,
+                        completedEasy, completedMedium, completedHard, completedExpert, completedMaster
+                    }));
+                });
+            }
+
+            // Initialize
+            loadProgress();
+
+            // Daily reset check
+            function checkDailyReset() {
+                const today = new Date().toDateString();
+                if (lastDailyDate !== today) {
+                    dailyCompleted = false;
+                    saveProgress();
+                }
+            }
+            checkDailyReset();
+            setInterval(checkDailyReset, 60000); // Check every minute
+
+            // Update UI
+            function refreshStats() {
+                safeExecute(() => {
+                    document.getElementById('coinBalance').innerText = coins;
+                    document.getElementById('winCount').innerText = winTotal;
+                    document.getElementById('lossCount').innerText = lossTotal;
+                    document.getElementById('streakCount').innerHTML = currentStreak + ' <span class="best-badge" id="bestStreakBadge">' + bestStreak + '</span>';
+                    
+                    // Update best streak badge
+                    const badge = document.getElementById('bestStreakBadge');
+                    if (badge) badge.innerText = bestStreak;
+                    
+                    if (document.getElementById('winStreak')) 
+                        document.getElementById('winStreak').innerText = currentStreak;
+                    
+                    if (document.getElementById('winBestStreak'))
+                        document.getElementById('winBestStreak').innerText = bestStreak;
+
+                    const ds = document.getElementById('dailyStatus');
+                    const dailyBtn = document.getElementById('startDailyBtn');
+                    if (ds) ds.innerText = dailyCompleted ? '✅ Done today' : '✨ Available now';
+                    if (dailyBtn) dailyBtn.disabled = dailyCompleted;
+                });
+            }
+
+            // Audio with user interaction handling
+            let audioContext = null;
+            function initAudio() {
+                if (audioContext) return;
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    // Resume on first user interaction
+                    const resumeAudio = () => {
+                        if (audioContext && audioContext.state === 'suspended') {
+                            audioContext.resume().then(() => {
+                                document.removeEventListener('click', resumeAudio);
+                                document.removeEventListener('touchstart', resumeAudio);
+                            });
+                        }
+                    };
+                    document.addEventListener('click', resumeAudio);
+                    document.addEventListener('touchstart', resumeAudio);
+                } catch (e) {
+                    console.log('Audio not supported');
+                }
+            }
+
+            function playSound(type) {
+                if (!soundEnabled || !audioContext) return;
+                try {
+                    if (audioContext.state !== 'running') return;
+                    
+                    const now = audioContext.currentTime;
+                    const gain = audioContext.createGain();
+                    gain.connect(audioContext.destination);
+                    gain.gain.setValueAtTime(0.2, now);
+
+                    if (type === 'click') {
+                        const osc = audioContext.createOscillator();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(880, now);
+                        osc.frequency.exponentialRampToValueAtTime(440, now + 0.05);
+                        const oscGain = audioContext.createGain();
+                        osc.connect(oscGain);
+                        oscGain.connect(gain);
+                        oscGain.gain.setValueAtTime(0.1, now);
+                        oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                        osc.start(now);
+                        osc.stop(now + 0.1);
+                    } else if (type === 'win') {
+                        [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+                            const osc = audioContext.createOscillator();
+                            osc.type = 'sine';
+                            osc.frequency.value = f;
+                            const oscGain = audioContext.createGain();
+                            osc.connect(oscGain);
+                            oscGain.connect(gain);
+                            const t = now + i * 0.12;
+                            oscGain.gain.setValueAtTime(0.15, t);
+                            oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+                            osc.start(t);
+                            osc.stop(t + 0.15);
+                        });
+                    } else if (type === 'loss') {
+                        const osc = audioContext.createOscillator();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(349.23, now);
+                        osc.frequency.exponentialRampToValueAtTime(261.63, now + 0.3);
+                        const oscGain = audioContext.createGain();
+                        osc.connect(oscGain);
+                        oscGain.connect(gain);
+                        oscGain.gain.setValueAtTime(0.12, now);
+                        oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                        osc.start(now);
+                        osc.stop(now + 0.4);
+                    }
+                } catch (e) {
+                    console.log('Sound error:', e);
+                }
+            }
+
+            // Timer management (reliable cleanup)
+            let activeTimer = null, timeLeft = 10.0, totalTime = 10.0;
+            function stopTimer() {
+                if (activeTimer) {
+                    clearInterval(activeTimer);
+                    activeTimer = null;
+                }
+            }
+
+            function updateTimerDisplay() {
+                const displays = ['globalTimerDisplay', 'globalTimerDisplay2', 'globalTimerDisplay3', 'globalTimerDisplay4', 'globalTimerDisplay5'];
+                const fills = ['globalTimerFill', 'globalTimerFill2', 'globalTimerFill3', 'globalTimerFill4', 'globalTimerFill5'];
+                const str = timeLeft.toFixed(1);
+                const percent = (timeLeft / totalTime) * 100;
+                
+                displays.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.innerText = str;
+                });
+                fills.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.width = percent + '%';
+                });
+            }
+
+            // Navigation helper
+            function showPage(pageId) {
+                document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+                document.getElementById(pageId).style.display = 'block';
+            }
+
+            // ========== GAME LOGIC ==========
+            let selectedFruit = null, guessPagesFruits = [], isDailyMode = false;
+
+            function getOptionsCount() {
+                if (isDailyMode) return 5;
+                if (currentDifficulty === 'easy') return currentLevel <= 20 ? 5 : 8;
+                if (currentDifficulty === 'medium') return currentLevel <= 20 ? 12 : 16;
+                if (currentDifficulty === 'hard') return currentLevel <= 20 ? 20 : 25;
+                if (currentDifficulty === 'expert') return currentLevel <= 20 ? 30 : 35;
+                if (currentDifficulty === 'master') return currentLevel <= 20 ? 40 : 45;
+                return 5;
+            }
+
+            function getFruitPool() {
+                if (isDailyMode) return DAILY_FRUITS;
+                if (currentDifficulty === 'easy') return BASE_FRUITS.slice(0, 8);
+                if (currentDifficulty === 'medium') return BASE_FRUITS.slice(0, 12);
+                if (currentDifficulty === 'hard') return BASE_FRUITS.slice(0, 15);
+                if (currentDifficulty === 'expert') return BASE_FRUITS;
+                return BASE_FRUITS;
+            }
+
+            function pickRandomFruits(count, exclude = null) {
+                let pool = getFruitPool();
+                if (exclude) pool = pool.filter(f => f.name !== exclude.name);
+                const safeCount = Math.min(count, pool.length);
+                return [...pool].sort(() => Math.random() - 0.5).slice(0, safeCount);
+            }
+
+            function buildGuessPages() {
+                const count = getOptionsCount();
+                const targetPage = Math.floor(Math.random() * 5);
+                const pages = [];
+                for (let i = 0; i < 5; i++) {
+                    if (i === targetPage) {
+                        const others = pickRandomFruits(count - 1, selectedFruit);
+                        pages.push([selectedFruit, ...others].sort(() => Math.random() - 0.5));
+                    } else {
+                        pages.push(pickRandomFruits(count, selectedFruit));
+                    }
+                }
+                return pages;
+            }
+
+            function renderGuessGrids() {
+                for (let i = 0; i < 5; i++) {
+                    const grid = document.getElementById(`guessGrid${i+1}`);
+                    if (grid) {
+                        grid.innerHTML = guessPagesFruits[i].map(f => 
+                            `<div class="fruit-option"><img src="${f.img}" class="fruit-img small" alt="${f.name}" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'60\' height=\'60\' viewBox=\'0 0 60 60\'%3E%3Ccircle cx=\'30\' cy=\'30\' r=\'25\' fill=\'%23ffd966\'/%3E%3Ctext x=\'30\' y=\'42\' font-size=\'30\' text-anchor=\'middle\' fill=\'%232a1e4a\'%3E🍍%3C/text%3E%3C/svg%3E'; this.classList.add('fallback');"><span>${f.name}</span></div>`
+                        ).join('');
+                    }
+                    
+                    const dots = document.getElementById(`dots${i+1}`);
+                    if (dots) {
+                        dots.innerHTML = Array(5).fill().map((_, j) => 
+                            `<span class="dot ${j === i ? 'active' : ''}"></span>`
+                        ).join('');
+                    }
+                }
+            }
+
+            function renderSelectionGrid(dailyMode = false) {
+                isDailyMode = dailyMode;
+                const pool = dailyMode ? DAILY_FRUITS : pickRandomFruits(5);
+                const grid = document.getElementById('fruitGridDynamic');
+                if (!grid) return;
+
+                grid.innerHTML = pool.map(f => 
+                    `<div class="fruit-option" data-fruit='${JSON.stringify(f).replace(/'/g, "&apos;")}'>
+                        <img src="${f.img}" class="fruit-img small" alt="${f.name}" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'60\' height=\'60\' viewBox=\'0 0 60 60\'%3E%3Ccircle cx=\'30\' cy=\'30\' r=\'25\' fill=\'%23ffd966\'/%3E%3Ctext x=\'30\' y=\'42\' font-size=\'30\' text-anchor=\'middle\' fill=\'%232a1e4a\'%3E🍍%3C/text%3E%3C/svg%3E'; this.classList.add('fallback');">
+                        <span>${f.name}</span>
+                    </div>`
+                ).join('');
+
+                grid.querySelectorAll('.fruit-option').forEach(opt => {
+                    opt.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        playSound('click');
+                        try {
+                            selectedFruit = JSON.parse(opt.getAttribute('data-fruit').replace(/&apos;/g, "'"));
+                            guessPagesFruits = buildGuessPages();
+                            renderGuessGrids();
+                            showPage('guessPage1');
+                            startGlobalTimer();
+                        } catch (err) {
+                            console.error('Selection error:', err);
+                            showToast('Try again!');
+                        }
+                    });
+                });
+
+                document.getElementById('selectionDots').innerHTML = Array(5).fill().map(() => '<span class="dot"></span>').join('');
+            }
+
+            function startGlobalTimer() {
+                stopTimer();
+                timeLeft = 10.0;
+                updateTimerDisplay();
+                
+                activeTimer = setInterval(() => {
+                    timeLeft = Math.max(0, timeLeft - 0.1);
+                    updateTimerDisplay();
+                    
+                    if (timeLeft <= 0) {
+                        stopTimer();
+                        safeExecute(() => {
+                            lossTotal++;
+                            currentStreak = 0;
+                            saveProgress();
+                            refreshStats();
+                            
+                            if (selectedFruit) {
+                                document.getElementById('hiddenFruitName').innerText = selectedFruit.name;
+                            }
+                            
+                            showPage('lossPage');
+                            playSound('loss');
+                        });
+                    }
+                }, 100);
+            }
+
+            // Unlock check
+            function isUnlocked(diff, lvl) {
+                if (lvl === 1) return true;
+                const arr = diff === 'easy' ? completedEasy : diff === 'medium' ? completedMedium : 
+                           diff === 'hard' ? completedHard : diff === 'expert' ? completedExpert : completedMaster;
+                return arr[lvl - 1];
+            }
+
+            function renderLevelGrid() {
+                const heading = document.getElementById('levelDiffHeading');
+                heading.innerText = {
+                    'easy': '🍏 easy · 40 levels',
+                    'medium': '🍊 medium · 40 levels',
+                    'hard': '🍉 hard · 40 levels',
+                    'expert': '🔥 expert · 40 levels',
+                    'master': '👑 master · 40 levels'
+                }[currentDifficulty] || '🍏 easy · 40 levels';
+
+                let html = '';
+                for (let lvl = 1; lvl <= 40; lvl++) {
+                    const unlocked = isUnlocked(currentDifficulty, lvl);
+                    const completed = {
+                        'easy': completedEasy[lvl],
+                        'medium': completedMedium[lvl],
+                        'hard': completedHard[lvl],
+                        'expert': completedExpert[lvl],
+                        'master': completedMaster[lvl]
+                    }[currentDifficulty] || false;
+
+                    let classes = 'level-btn';
+                    if (!unlocked) classes += ' locked';
+                    else if (completed) classes += ' completed';
+                    else classes += ' unlocked';
+                    if (lvl === currentLevel && unlocked) classes += ' current';
+
+                    html += `<button class="${classes}" data-level="${lvl}" ${!unlocked ? 'disabled' : ''}>${lvl}</button>`;
+                }
+
+                document.getElementById('levelGrid').innerHTML = html;
+                
+                document.querySelectorAll('.level-btn:not([disabled])').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        playSound('click');
+                        currentLevel = parseInt(btn.dataset.level);
+                        showPage('pageChooseFruit');
+                        document.getElementById('chooseLevelDisplay').innerText = `🍃 level ${currentLevel} · pick fruit`;
+                        selectedFruit = null;
+                        renderSelectionGrid(false);
+                    });
+                });
+            }
+
+            // Yes/No handlers
+            function attachYesNoListeners() {
+                for (let i = 1; i <= 5; i++) {
+                    const yes = document.getElementById(`yesBtn${i}`);
+                    const no = document.getElementById(`noBtn${i}`);
+                    const idx = i - 1;
+
+                    const handler = (answer) => {
+                        if (!selectedFruit) return;
+                        
+                        const found = guessPagesFruits[idx]?.some(f => f.name === selectedFruit.name) || false;
+
+                        if ((answer === 'yes' && found) || (answer === 'no' && !found && idx === 4)) {
+                            // WIN
+                            stopTimer();
+                            
+                            const coinReward = isDailyMode ? 10 : getCoinRewardForLevel(currentLevel);
+                            coins += coinReward;
+                            
+                            winTotal++;
+                            currentStreak++;
+                            if (currentStreak > bestStreak) bestStreak = currentStreak;
+                            
+                            if (isDailyMode) {
+                                dailyCompleted = true;
+                                lastDailyDate = new Date().toDateString();
+                            } else {
+                                // Mark level completed
+                                const arr = currentDifficulty === 'easy' ? completedEasy :
+                                           currentDifficulty === 'medium' ? completedMedium :
+                                           currentDifficulty === 'hard' ? completedHard :
+                                           currentDifficulty === 'expert' ? completedExpert : completedMaster;
+                                arr[currentLevel] = true;
+                            }
+
+                            saveProgress();
+                            refreshStats();
+
+                            document.getElementById('finalFruitImg').src = selectedFruit.img;
+                            document.getElementById('winLevelNumber').innerText = currentLevel;
+                            document.getElementById('coinEarnedAmount').innerText = coinReward;
+                            
+                            showPage('winPage');
+                            playSound('win');
+
+                        } else if (answer === 'no' && !found && idx < 4) {
+                            // Next page
+                            showPage(`guessPage${i+1}`);
+                        } else {
+                            // LOSS
+                            stopTimer();
+                            lossTotal++;
+                            currentStreak = 0;
+                            saveProgress();
+                            refreshStats();
+
+                            if (selectedFruit) {
+                                document.getElementById('hiddenFruitName').innerText = selectedFruit.name;
+                            }
+                            
+                            showPage('lossPage');
+                            playSound('loss');
+                        }
+                    };
+
+                    yes.addEventListener('click', (e) => { e.preventDefault(); playSound('click'); handler('yes'); });
+                    no.addEventListener('click', (e) => { e.preventDefault(); playSound('click'); handler('no'); });
+                    
+                    // Touch events for mobile
+                    yes.addEventListener('touchstart', (e) => { e.preventDefault(); playSound('click'); handler('yes'); });
+                    no.addEventListener('touchstart', (e) => { e.preventDefault(); playSound('click'); handler('no'); });
+                }
+            }
+
+            // ========== EVENT LISTENERS ==========
+            document.addEventListener('DOMContentLoaded', () => {
+                initAudio();
+                refreshStats();
+                renderLevelGrid();
+
+                // Welcome screen
+                document.getElementById('gotoDifficultyBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); playSound('click'); showPage('pageDifficulty');
+                });
+
+                // Back buttons
+                document.getElementById('backFromLevelsToDiff').addEventListener('click', (e) => {
+                    e.preventDefault(); playSound('click'); showPage('pageDifficulty');
+                });
+                document.getElementById('backToLevelsBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); playSound('click'); showPage('pageLevels'); renderLevelGrid();
+                });
+
+                // Difficulty buttons
+                document.getElementById('diffEasy').addEventListener('click', (e) => {
+                    e.preventDefault(); playSound('click'); currentDifficulty = 'easy'; showPage('pageLevels'); renderLevelGrid();
+                });
+                document.getElementById('diffMedium').addEventListener('click', (e) => {
+                    e.preventDefault(); playSound('click'); currentDifficulty = 'medium'; showPage('pageLevels'); renderLevelGrid();
+                });
+                document.getElementById('diffHard').addEventListener('click', (e) => {
+                    e.preventDefault(); playSound('click'); currentDifficulty = 'hard'; showPage('pageLevels'); renderLevelGrid();
+                });
+                document.getElementById('diffExpert').addEventListener('click', (e) => {
+                    e.preventDefault(); playSound('click'); currentDifficulty = 'expert'; showPage('pageLevels'); renderLevelGrid();
+                });
+                document.getElementById('diffMaster').addEventListener('click', (e) => {
+                    e.preventDefault(); playSound('click'); currentDifficulty = 'master'; showPage('pageLevels'); renderLevelGrid();
+                });
+
+                // Daily
+                document.getElementById('startDailyBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); playSound('click');
+                    if (dailyCompleted) {
+                        showToast('Daily already completed!');
+                        return;
+                    }
+                    currentDifficulty = 'daily';
+                    isDailyMode = true;
+                    showPage('pageChooseFruit');
+                    document.getElementById('chooseLevelDisplay').innerText = '🌟 Daily Challenge';
+                    selectedFruit = null;
+                    renderSelectionGrid(true);
+                });
+
+                // Sound toggle
+                document.getElementById('soundToggleBtn').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    soundEnabled = !soundEnabled;
+                    e.target.textContent = soundEnabled ? '🔊 Sound ON' : '🔇 Sound OFF';
+                    showToast(soundEnabled ? 'Sound on' : 'Sound off');
+                });
+
+                // Tutorial
+                const modal = document.getElementById('tutorialModal');
+                document.getElementById('tutorialBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); playSound('click'); modal.style.display = 'flex';
+                });
+                document.getElementById('closeTutorial').addEventListener('click', (e) => {
+                    e.preventDefault(); playSound('click'); modal.style.display = 'none';
+                });
+                document.getElementById('tutorialStart').addEventListener('click', (e) => {
+                    e.preventDefault(); playSound('click'); modal.style.display = 'none';
+                });
+
+                // Reset
+                document.getElementById('resetProgressBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); playSound('click');
+                    if (confirm('Reset all progress and coins?')) {
+                        localStorage.removeItem('fruitSense_production');
+                        completedEasy = new Array(41).fill(false);
+                        completedMedium = new Array(41).fill(false);
+                        completedHard = new Array(41).fill(false);
+                        completedExpert = new Array(41).fill(false);
+                        completedMaster = new Array(41).fill(false);
+                        winTotal = 0; lossTotal = 0; currentStreak = 0; bestStreak = 0; coins = 0;
+                        dailyCompleted = false; lastDailyDate = '';
+                        refreshStats(); saveProgress();
+                        showToast('Progress reset!');
+                        renderLevelGrid();
+                    }
+                });
+
+                // Win page buttons
+                document.getElementById('winNextLevelBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); playSound('click');
+                    
+                    // Handle daily mode specially
+                    if (isDailyMode) {
+                        isDailyMode = false;
+                        showPage('pageDifficulty');
+                        return;
+                    }
+                    
+                    if (!isDailyMode && currentLevel < 40) currentLevel++;
+                    showPage('pageChooseFruit');
+                    document.getElementById('chooseLevelDisplay').innerText = `🍃 level ${currentLevel} · pick fruit`;
+                    selectedFruit = null;
+                    renderSelectionGrid(false);
+                });
+
+                document.getElementById('winBackToLevelsBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); playSound('click');
+                    isDailyMode = false;
+                    showPage('pageLevels');
+                    renderLevelGrid();
+                });
+
+                document.getElementById('winPlayAgainBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); playSound('click');
+                    
+                    // If daily mode, go back to difficulty
+                    if (isDailyMode) {
+                        showPage('pageDifficulty');
+                        return;
+                    }
+                    
+                    showPage('pageChooseFruit');
+                    document.getElementById('chooseLevelDisplay').innerText = `🍃 level ${currentLevel} · pick fruit`;
+                    selectedFruit = null;
+                    renderSelectionGrid(false);
+                });
+
+                // Loss page buttons
+                document.getElementById('lossTryAgainBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); playSound('click');
+                    
+                    // If daily mode, go back to difficulty
+                    if (isDailyMode) {
+                        showPage('pageDifficulty');
+                        return;
+                    }
+                    
+                    showPage('pageChooseFruit');
+                    document.getElementById('chooseLevelDisplay').innerText = `🍃 level ${currentLevel} · pick fruit`;
+                    selectedFruit = null;
+                    renderSelectionGrid(false);
+                });
+
+                document.getElementById('lossBackToLevelsBtn').addEventListener('click', (e) => {
+                    e.preventDefault(); playSound('click');
+                    isDailyMode = false;
+                    showPage('pageLevels');
+                    renderLevelGrid();
+                });
+
+                attachYesNoListeners();
+
+                // Hide loading spinner
+                setTimeout(() => {
+                    const spinner = document.querySelector('.loading-spinner');
+                    if (spinner) spinner.style.display = 'none';
+                }, 500);
+            });
+
+            // Prevent double-tap zoom on buttons
+            document.querySelectorAll('button, .fruit-option, .back-sign').forEach(el => {
+                el.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                }, { passive: false });
+            });
+        })();
+    </script>
+</body>
+</html>
